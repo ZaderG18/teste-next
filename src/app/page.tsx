@@ -8,8 +8,8 @@ export default function Home() {
           className="dark:invert"
           src="/next.svg"
           alt="Next.js logo"
-          width={100}
-          height={20}
+          width={800}
+          height={90}
           priority
         />
         <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
@@ -30,7 +30,7 @@ export default function Home() {
               className="font-medium text-zinc-950 dark:text-zinc-50"
             >
               Learning
-            </a>{" "}
+            </a>{""}
             center.
           </p>
         </div>
@@ -45,8 +45,8 @@ export default function Home() {
               className="dark:invert"
               src="/vercel.svg"
               alt="Vercel logomark"
-              width={16}
-              height={16}
+              width={66}
+              height={66}
             />
             Deploy Now
           </a>
