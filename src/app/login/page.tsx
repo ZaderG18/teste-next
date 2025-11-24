@@ -3,26 +3,23 @@ import LoginForm from "@/components/login/LoginForm";
 
 export default function LoginPage() {
     return (
-        <main className="min-h-screen w-full bg-[#3E235C] flex items-center">
-            <div className="flex w-full max-w-6xl mx-auto">
+        <main className="min-h-screen w-full flex">
                 
                 {/* lado esquerdo - imagem */}
-                <div className="hidden md:flex w-1/2 bg-gradient-to-b from-[#3E235C] to-[#1A1A1A] items-center justify-center p-10">
+                <div className="hidden md:block w-1/2 relative">
                     <Image
                         src="/fundo.png"
                         alt="fundo Image"
                         fill
-                        className="hidden md:flex w-1/2 h-screen relative overflow-hidden"
-                        priority
+                        className="object-cover brightness-75"
                         />
                 </div>
 
                 {/* lado direito - formulário */}
-                <div className="w-full md:w-1/2 px-6 py-12 flex flex-col items-center justify-center relative z-20">
+                <div className="w-full md:w-1/2 bg-[#3E235C] flex items-center justify-center px-10">
                     <LoginForm />
                 </div>
 
-            </div>
         </main>
     );
 }

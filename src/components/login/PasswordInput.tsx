@@ -12,20 +12,21 @@ interface PasswordInputProps {
 
 export default function PasswordInput({ value, onChange, placeholder }: PasswordInputProps) {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+    
     return (
-        <div className="relative">
+        <div className="relative w-full">
             <Input 
             type={isPasswordVisible ? "text" : "password"}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                  placeholder={placeholder}        
-            className="pr-10"
+            className="w-full p-2 pr-10 border rounded-md"
             />
 
             <Button
             type="button"
             onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-            className="absolute top-1/2 right-2 -translate-y-1/2 p-0 h-8 w-8 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-700 focus:outline-none"
+            className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-500 hover:text-gray-700"
             >
                 {isPasswordVisible ? <EyeOff size={20} /> : <Eye size={20} />}
             </Button>
