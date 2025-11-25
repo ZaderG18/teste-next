@@ -10,12 +10,13 @@ import { Label } from "@/components/ui/label";
 import Image from "next/image";
 
 export default function LoginForm() {
-    const router = useRouter();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
+  const router = useRouter();
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -23,23 +24,21 @@ export default function LoginForm() {
         setError("");
 
         try {
-            // 1. Pegar o cookie CSRF (obrigatório com Sanctum SPA)
-            await api.get("/sanctum/csrf-cookie");
-
-            // 2. Enviar o login para o Laravel
-            const response = await api.post("/login", {
-                email: email,
-                password: password, // nome correto para o Laravel
+            const response = await api.post("/auth/login", {
+                email,
+                password,
             });
 
-            console.log("Login bem sucedido:", response.data);
+            const { token } = response.data;
 
-            // 3. Redirecionar para dashboard
+            // salva o token
+            localStorage.setItem("sam_token", token);
+
             router.push("/dashboard");
 
         } catch (err: any) {
-            console.error("Erro no login:", err);
             setError("E-mail ou senha inválidos.");
+            console.error(err);
         } finally {
             setLoading(false);
         }

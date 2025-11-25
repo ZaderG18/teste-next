@@ -1,12 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: 'https://localhost:8000/api',
-    withCredentials: true,
-    headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-    },
+    baseURL: "http://localhost:8000/api",
+    withCredentials: false, // Token vai via header, não por cookie
 });
 
 export default api;
