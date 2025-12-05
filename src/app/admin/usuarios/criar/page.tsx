@@ -1,5 +1,5 @@
 // src/app/usuarios/criar/page.tsx
-import FormUser from "@/components/FormUser";
+import FormUser from "@/components/FormUser"; // Importe do local correto que definimos
 
 export default function CriarUsuarioPage() {
   return (
@@ -12,6 +12,7 @@ export default function CriarUsuarioPage() {
         </p>
       </div>
 
+      {/* O Formulário que criamos */}
       <FormUser />
     </div>
   );
