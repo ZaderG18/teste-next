@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // Para redirecionar após sucesso
+import api from "@/lib/api"; // Certifique-se de ter configurado o axios aqui
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,22 +21,26 @@ import {
   Building2, 
   CheckCircle2, 
   ChevronRight, 
-  ChevronLeft 
+  ChevronLeft,
+  AlertCircle
 } from "lucide-react";
 
 export default function FormUser() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     // Passo 1
-    nome: "",
+    nomeCompleto: "",
     matricula: "",
     email: "",
     telefone: "",
+    cpf: "",
     // Passo 2
     tipoAcesso: "aluno",
     nivelAcesso: "1",
+    status: "ativo",
     // Passo 3
     departamento: "",
     dataAdmissao: "",
@@ -45,19 +52,77 @@ export default function FormUser() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Correção do erro de TypeScript: definimos que 'value' é string
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const next = () => setStep((s) => Math.min(s + 1, 3));
+  // --- VALIDAÇÃO (A Lógica Nova) ---
+  const validateStep = (currentStep: number) => {
+    if (currentStep === 1) {
+      if (!formData.nomeCompleto || !formData.email || !formData.cpf || !formData.telefone) {
+        alert("Preencha todos os campos obrigatórios (Nome, Email, CPF, Telefone).");
+        return false;
+      }
+    }
+    // Adicione mais validações aqui se precisar (ex: Passo 3 condicional)
+    if (currentStep === 3) {
+       if (formData.tipoAcesso === 'aluno' && !formData.matricula) {
+           alert("Para alunos, a Matrícula/RM é obrigatória.");
+           return false;
+       }
+       if (formData.tipoAcesso === 'professor' && !formData.departamento) {
+           alert("Para professores, o Departamento é obrigatório.");
+           return false;
+       }
+    }
+    return true;
+  };
+
+  const next = () => {
+    if (validateStep(step)) {
+      setStep((s) => Math.min(s + 1, 3));
+    }
+  };
+
   const prev = () => setStep((s) => Math.max(s - 1, 1));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação final antes de enviar
+    if (!validateStep(3)) return;
+
     setIsLoading(true);
-    console.log("Enviando para API:", formData);
-    // Simulação de envio
-    setTimeout(() => setIsLoading(false), 2000);
+
+    try {
+        // Mapeamento: Transforma dados do Front para o formato do Back (Laravel)
+        const payload = {
+            nome: formData.nomeCompleto,      // Laravel espera 'nome'
+            email: formData.email,
+            cpf: formData.cpf,
+            telefone: formData.telefone,
+            tipo_acesso: formData.tipoAcesso, // Laravel espera 'tipo_acesso'
+            matricula: formData.matricula,
+            departamento: formData.departamento,
+            // Envia o resto se o controller aceitar
+            id_instituicao: 1 // Fallback temporário
+        };
+
+        console.log("Enviando Payload:", payload); // Debug no console
+
+        const response = await api.post('/usuarios', payload);
+
+        alert("Sucesso! " + response.data.message);
+        router.push("/dashboard"); // Redireciona para a home do painel
+
+    } catch (error: any) {
+        console.error("Erro no envio:", error);
+        const msg = error.response?.data?.message || "Erro de conexão com o servidor.";
+        alert("Erro: " + msg);
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -109,17 +174,17 @@ export default function FormUser() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2 col-span-2">
                     <Label>Nome Completo</Label>
-                    <Input name="nome" value={formData.nome} onChange={handleChange} placeholder="Digite o nome completo" className="h-11" required />
+                    <Input name="nomeCompleto" value={formData.nomeCompleto} onChange={handleChange} placeholder="Digite o nome completo" className="h-11" required />
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Matrícula / RM</Label>
-                    <Input name="matricula" value={formData.matricula} onChange={handleChange} placeholder="000000" className="h-11" />
+                    <Label>CPF</Label>
+                    <Input name="cpf" value={formData.cpf} onChange={handleChange} placeholder="000.000.000-00" className="h-11" required />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Telefone</Label>
-                    <Input name="telefone" value={formData.telefone} onChange={handleChange} placeholder="(11) 99999-9999" className="h-11" />
+                    <Input name="telefone" value={formData.telefone} onChange={handleChange} placeholder="(11) 99999-9999" className="h-11" required />
                   </div>
 
                   <div className="space-y-2 col-span-2">
@@ -138,7 +203,7 @@ export default function FormUser() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
                     <Label>Tipo de Usuário</Label>
-                    <Select onValueChange={(v) => handleSelectChange("tipoAcesso", v)} defaultValue={formData.tipoAcesso}>
+                    <Select onValueChange={(v: string) => handleSelectChange("tipoAcesso", v)} defaultValue={formData.tipoAcesso}>
                       <SelectTrigger className="h-11">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -146,21 +211,20 @@ export default function FormUser() {
                         <SelectItem value="aluno">Aluno</SelectItem>
                         <SelectItem value="professor">Professor</SelectItem>
                         <SelectItem value="coordenador">Coordenador</SelectItem>
+                        <SelectItem value="responsavel">Responsável</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Nível de Permissão</Label>
-                    <Select onValueChange={(v) => handleSelectChange("nivelAcesso", v)} defaultValue={formData.nivelAcesso}>
+                    <Label>Status Inicial</Label>
+                    <Select onValueChange={(v: string) => handleSelectChange("status", v)} defaultValue={formData.status}>
                       <SelectTrigger className="h-11">
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1">Nível 1 - Leitura</SelectItem>
-                        <SelectItem value="2">Nível 2 - Edição Básica</SelectItem>
-                        <SelectItem value="3">Nível 3 - Gestão</SelectItem>
-                        <SelectItem value="4">Nível 4 - Admin Total</SelectItem>
+                        <SelectItem value="ativo">Ativo</SelectItem>
+                        <SelectItem value="suspenso">Suspenso</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -186,7 +250,17 @@ export default function FormUser() {
                 <h2 className="text-2xl font-bold text-gray-800 border-l-4 border-purple-500 pl-4">Dados Institucionais</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {formData.tipoAcesso !== 'aluno' && (
+                  
+                  {/* CAMPO CONDICIONAL: MATRÍCULA SÓ PARA ALUNO */}
+                  {formData.tipoAcesso === 'aluno' && (
+                      <div className="space-y-2">
+                        <Label>Matrícula / RM</Label>
+                        <Input name="matricula" value={formData.matricula} onChange={handleChange} placeholder="000000" className="h-11" />
+                      </div>
+                  )}
+
+                  {/* CAMPO CONDICIONAL: DEPARTAMENTO (Esconde p/ Aluno e Resp) */}
+                  {formData.tipoAcesso !== 'aluno' && formData.tipoAcesso !== 'responsavel' && (
                     <div className="space-y-2 col-span-2">
                       <Label>Departamento / Setor</Label>
                       <Input name="departamento" value={formData.departamento} onChange={handleChange} placeholder="Ex: Secretaria Acadêmica" className="h-11" />
@@ -194,7 +268,7 @@ export default function FormUser() {
                   )}
 
                   <div className="space-y-2 col-span-2 md:col-span-1">
-                    <Label>Data de Admissão/Início</Label>
+                    <Label>{formData.tipoAcesso === 'aluno' ? 'Data de Matrícula' : 'Data de Admissão'}</Label>
                     <Input name="dataAdmissao" type="date" value={formData.dataAdmissao} onChange={handleChange} className="h-11" />
                   </div>
 
